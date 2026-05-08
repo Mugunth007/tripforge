@@ -1,13 +1,28 @@
 {
-  "name": "travel-planner",
-  "version": "1.0.0",
-  "description": "Travel Planning & Experience Engine with Google Maps",
+  "name": "tripforge",
+  "version": "3.0.0",
+  "description": "TripForge — Premium Travel Planning Engine with 11 Google Cloud APIs",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "test": "npx jest --coverage --forceExit",
     "dev": "node server.js"
   },
+  "keywords": [
+    "travel",
+    "google-maps",
+    "google-cloud",
+    "translation",
+    "route-planning",
+    "express",
+    "react",
+    "vite"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "author": "TripForge Team",
+  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
     "helmet": "^7.1.0",
