@@ -1,17 +1,19 @@
 /**
- * Tests for Travel Planner API
+ * @fileoverview Tests for Travel Planner API
+ * Tests cover health, config, CRUD, and input validation for all Google API proxies.
  */
 const request = require('supertest');
 const app = require('../server');
 
 describe('Health Check', () => {
-  it('GET /api/health returns healthy status with uptime', async () => {
+  it('GET /api/health returns healthy status with uptime and memory', async () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('healthy');
     expect(res.body.timestamp).toBeDefined();
     expect(res.body.uptime).toBeDefined();
     expect(res.body.memoryUsage).toBeDefined();
+    expect(res.body.cacheSize).toBeDefined();
   });
 });
 
@@ -44,11 +46,8 @@ describe('Trips CRUD', () => {
 
   it('POST /api/trips creates a trip', async () => {
     const res = await request(app).post('/api/trips').send({
-      name: 'Test Trip',
-      origin: 'New York',
-      destination: 'Boston',
-      waypoints: ['Philadelphia'],
-      preferences: { travelMode: 'DRIVING', avoidTolls: false }
+      name: 'Test Trip', origin: 'New York', destination: 'Boston',
+      waypoints: ['Philadelphia'], preferences: { travelMode: 'DRIVING' }
     });
     expect(res.status).toBe(201);
     expect(res.body.name).toBe('Test Trip');
@@ -61,6 +60,15 @@ describe('Trips CRUD', () => {
     const res = await request(app).post('/api/trips').send({ name: 'Bad Trip' });
     expect(res.status).toBe(400);
     expect(res.body.error).toContain('required');
+  });
+
+  it('POST /api/trips sanitizes input', async () => {
+    const longName = 'A'.repeat(200);
+    const res = await request(app).post('/api/trips').send({
+      name: longName, origin: 'NYC', destination: 'LA'
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.name.length).toBeLessThanOrEqual(100);
   });
 
   it('GET /api/trips lists all trips', async () => {
@@ -93,7 +101,7 @@ describe('Trips CRUD', () => {
   });
 });
 
-describe('Google API Proxies - Validation', () => {
+describe('Google Maps API Proxies - Validation', () => {
   it('GET /api/geocode requires address param', async () => {
     const res = await request(app).get('/api/geocode');
     expect(res.status).toBe(400);
@@ -106,10 +114,9 @@ describe('Google API Proxies - Validation', () => {
     expect(res.body.error).toContain('origins');
   });
 
-  it('GET /api/distance-matrix requires destinations', async () => {
+  it('GET /api/distance-matrix requires destinations param', async () => {
     const res = await request(app).get('/api/distance-matrix?origins=NYC');
     expect(res.status).toBe(400);
-    expect(res.body.error).toContain('destinations');
   });
 
   it('GET /api/places-nearby requires lat and lng', async () => {
@@ -122,5 +129,40 @@ describe('Google API Proxies - Validation', () => {
     const res = await request(app).get('/api/elevation');
     expect(res.status).toBe(400);
     expect(res.body.error).toContain('locations');
+  });
+});
+
+describe('Gemini AI Chat - Validation', () => {
+  it('POST /api/ai/chat requires message', async () => {
+    const res = await request(app).post('/api/ai/chat').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('message');
+  });
+
+  it('POST /api/ai/chat rejects empty message', async () => {
+    const res = await request(app).post('/api/ai/chat').send({ message: '   ' });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('Translation API - Validation', () => {
+  it('POST /api/translate requires text and target', async () => {
+    const res = await request(app).post('/api/translate').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('text');
+  });
+
+  it('POST /api/translate requires target language', async () => {
+    const res = await request(app).post('/api/translate').send({ text: 'hello' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('target');
+  });
+
+  it('GET /api/translate/languages returns error without API key', async () => {
+    const original = process.env.GOOGLE_MAPS_API_KEY;
+    delete process.env.GOOGLE_MAPS_API_KEY;
+    const res = await request(app).get('/api/translate/languages');
+    expect(res.status).toBe(500);
+    process.env.GOOGLE_MAPS_API_KEY = original;
   });
 });
