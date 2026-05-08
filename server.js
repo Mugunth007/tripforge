@@ -120,6 +120,18 @@ function sanitize(input, maxLen = 500) {
   return input.trim().substring(0, maxLen);
 }
 
+/**
+ * Returns the Gemini API key (separate from Maps key if provided).
+ * Falls back to GOOGLE_MAPS_API_KEY if GEMINI_API_KEY is not set.
+ * @returns {string|null}
+ */
+function getGeminiKey() {
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey && geminiKey !== 'YOUR_GEMINI_KEY_HERE') return geminiKey;
+  return getApiKey();
+}
+
+
 // =====================
 // CONFIG & HEALTH
 // =====================
@@ -259,7 +271,7 @@ app.get('/api/elevation', async (req, res) => {
 app.post('/api/ai/chat', async (req, res) => {
   const message = sanitize(req.body.message, 1000);
   if (!message) return res.status(400).json({ error: 'message is required' });
-  const apiKey = getApiKey();
+  const apiKey = getGeminiKey();
   if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
 
   const history = Array.isArray(req.body.history) ? req.body.history.slice(-10) : [];
@@ -274,7 +286,7 @@ app.post('/api/ai/chat', async (req, res) => {
   ];
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
