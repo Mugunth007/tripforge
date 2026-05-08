@@ -1,63 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Plan trips dynamically with preferences, constraints, and real-time Google Maps updates.">
-    <title>TripForge — Travel Planning Engine</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
-        :root{--bg:#0b1120;--surface:#131a2e;--card:#1a2340;--border:#253256;--accent:#6366f1;--accent2:#818cf8;--text:#e2e8f0;--muted:#64748b;--success:#34d399;--danger:#f87171;--radius:12px}
-        body{background:var(--bg);color:var(--text);min-height:100vh}
-        .app-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-        .app-bar h1{font-size:20px;background:linear-gradient(135deg,#818cf8,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-        .app-bar .badge{background:var(--accent);color:#fff;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
-        .layout{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 57px)}
-        .sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
-        .map-container{position:relative}
-        #map{width:100%;height:100%}
-        label{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px}
-        input,select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;outline:none;transition:.2s}
-        input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(99,102,241,.2)}
-        .field{display:flex;flex-direction:column}
-        .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-        .btn{padding:12px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
-        .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#4f46e5}
-        .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--accent);color:var(--accent2)}
-        .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}.btn-danger:hover{background:rgba(248,113,113,.1)}
-        .btn:disabled{opacity:.5;cursor:not-allowed}
-        .section-title{font-size:15px;font-weight:700;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:4px}
-        .waypoint-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border-radius:8px;font-size:13px}
-        .waypoint-item button{background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:0 4px}
-        .trip-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:.2s}
-        .trip-card:hover{border-color:var(--accent);transform:translateY(-1px)}
-        .trip-card h4{font-size:14px;margin-bottom:4px}.trip-card p{font-size:12px;color:var(--muted)}
-        .trip-card .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-        .info-panel{position:absolute;bottom:20px;left:20px;right:20px;background:rgba(19,26,46,.95);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);padding:16px;z-index:50;max-height:200px;overflow-y:auto}
-        .info-panel h3{font-size:14px;margin-bottom:8px;color:var(--accent2)}
-        .info-panel .stat{display:inline-block;background:var(--card);padding:6px 12px;border-radius:6px;font-size:13px;margin-right:8px;margin-bottom:6px}
-        .pref-group{display:flex;flex-wrap:wrap;gap:8px}
-        .pref-chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:12px;cursor:pointer;transition:.2s;user-select:none}
-        .pref-chip.active{border-color:var(--accent);background:rgba(99,102,241,.15);color:var(--accent2)}
-        .toast{position:fixed;top:70px;right:20px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 20px;font-size:13px;z-index:200;animation:slideIn .3s ease}
-        @keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
-        .loading-overlay{position:absolute;inset:0;background:rgba(11,17,32,.8);display:flex;align-items:center;justify-content:center;z-index:60;font-size:14px;color:var(--accent2)}
-        @media(max-width:768px){.layout{grid-template-columns:1fr;grid-template-rows:auto 50vh}.sidebar{max-height:50vh}}
-        .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+import { useState, useEffect, useRef, useCallback } from 'react';
+import './index.css';
 
 /* ── Toast Component ── */
 function Toast({ message, onDone }) {
-  useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, [message, onDone]);
   return <div className="toast" role="alert">{message}</div>;
 }
 
@@ -94,20 +40,26 @@ function App() {
   // Load Google Maps script
   useEffect(() => {
     if (!apiKey || mapsLoaded) return;
+    const existingScript = document.getElementById('google-maps-script');
+    if (existingScript) return; // Prevent multiple additions in strict mode
     const s = document.createElement('script');
+    s.id = 'google-maps-script';
     s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     s.async = true;
     s.defer = true;
     s.onload = () => setMapsLoaded(true);
     s.onerror = () => setToast('Failed to load Google Maps');
     document.head.appendChild(s);
-  }, [apiKey]);
+  }, [apiKey, mapsLoaded]);
 
   // Init map
   useEffect(() => {
     if (!mapsLoaded || !mapRef.current) return;
-    const map = new google.maps.Map(mapRef.current, {
-      center: { lat: 20, lng: 0 }, zoom: 3,
+    if (mapInstance.current) return; // Already initialized
+
+    const map = new window.google.maps.Map(mapRef.current, {
+      center: { lat: 39.8283, lng: -98.5795 }, // Center of US
+      zoom: 4,
       styles: [
         { elementType: "geometry", stylers: [{ color: "#0b1120" }] },
         { elementType: "labels.text.stroke", stylers: [{ color: "#131a2e" }] },
@@ -119,15 +71,16 @@ function App() {
       disableDefaultUI: true, zoomControl: true,
     });
     mapInstance.current = map;
-    directionsRenderer.current = new google.maps.DirectionsRenderer({
+    directionsRenderer.current = new window.google.maps.DirectionsRenderer({
       map, polylineOptions: { strokeColor: '#6366f1', strokeWeight: 5 },
       suppressMarkers: false,
     });
+    
     // Autocomplete
     const setupAC = (inputId, setter) => {
       const el = document.getElementById(inputId);
       if (!el) return null;
-      const ac = new google.maps.places.Autocomplete(el, { fields: ['formatted_address', 'geometry'] });
+      const ac = new window.google.maps.places.Autocomplete(el, { fields: ['formatted_address', 'geometry'] });
       ac.addListener('place_changed', () => {
         const place = ac.getPlace();
         if (place?.formatted_address) setter(place.formatted_address);
@@ -142,11 +95,11 @@ function App() {
   const planRoute = useCallback(() => {
     if (!origin || !destination || !mapsLoaded) return;
     setPlanning(true); setRouteInfo(null);
-    const svc = new google.maps.DirectionsService();
+    const svc = new window.google.maps.DirectionsService();
     svc.route({
       origin, destination,
       waypoints: waypoints.map(w => ({ location: w, stopover: true })),
-      travelMode: google.maps.TravelMode[travelMode],
+      travelMode: window.google.maps.TravelMode[travelMode],
       avoidTolls, avoidHighways, optimizeWaypoints: true,
     }, (result, status) => {
       setPlanning(false);
@@ -316,7 +269,4 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-    </script>
-</body>
-</html>
+export default App;
