@@ -1,4 +1,4 @@
-FROM node:18-slim AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /usr/src/app/frontend
 COPY frontend/package*.json ./
@@ -6,7 +6,7 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-FROM node:18-slim
+FROM node:20-slim
 
 WORKDIR /usr/src/app
 
