@@ -132,18 +132,7 @@ describe('Google Maps API Proxies - Validation', () => {
   });
 });
 
-describe('Gemini AI Chat - Validation', () => {
-  it('POST /api/ai/chat requires message', async () => {
-    const res = await request(app).post('/api/ai/chat').send({});
-    expect(res.status).toBe(400);
-    expect(res.body.error).toContain('message');
-  });
 
-  it('POST /api/ai/chat rejects empty message', async () => {
-    const res = await request(app).post('/api/ai/chat').send({ message: '   ' });
-    expect(res.status).toBe(400);
-  });
-});
 
 describe('Translation API - Validation', () => {
   it('POST /api/translate requires text and target', async () => {

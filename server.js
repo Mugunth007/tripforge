@@ -120,16 +120,6 @@ function sanitize(input, maxLen = 500) {
   return input.trim().substring(0, maxLen);
 }
 
-/**
- * Returns the Gemini API key (separate from Maps key if provided).
- * Falls back to GOOGLE_MAPS_API_KEY if GEMINI_API_KEY is not set.
- * @returns {string|null}
- */
-function getGeminiKey() {
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (geminiKey && geminiKey !== 'YOUR_GEMINI_KEY_HERE') return geminiKey;
-  return getApiKey();
-}
 
 
 // =====================
@@ -258,55 +248,7 @@ app.get('/api/elevation', async (req, res) => {
   }
 });
 
-// =====================
-// GOOGLE GEMINI AI
-// =====================
 
-/**
- * POST /api/ai/chat
- * Proxies to Google Gemini API for AI-powered travel planning assistance.
- * @body {string} message - User's message
- * @body {Array} history - Chat history for context
- */
-app.post('/api/ai/chat', async (req, res) => {
-  const message = sanitize(req.body.message, 1000);
-  if (!message) return res.status(400).json({ error: 'message is required' });
-  const apiKey = getGeminiKey();
-  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
-
-  const history = Array.isArray(req.body.history) ? req.body.history.slice(-10) : [];
-
-  const systemPrompt = `You are TripForge AI, a helpful travel planning assistant. You help users plan trips, suggest destinations, recommend activities, provide travel tips, packing lists, budget estimates, and safety advice. Keep responses concise (under 200 words), friendly, and practical. Use emojis sparingly for warmth.`;
-
-  const contents = [
-    { role: 'user', parts: [{ text: systemPrompt }] },
-    { role: 'model', parts: [{ text: 'Understood! I\'m TripForge AI, your travel planning assistant. How can I help you plan your next adventure?' }] },
-    ...history.map(h => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: sanitize(h.text, 500) }] })),
-    { role: 'user', parts: [{ text: message }] },
-  ];
-
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 500, temperature: 0.7 } }),
-    });
-    const data = await response.json();
-
-    if (data.error) {
-      logger.error('Gemini API error', { error: data.error.message });
-      return res.status(502).json({ error: 'AI service error: ' + data.error.message });
-    }
-
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.';
-    logger.info('Gemini AI response generated');
-    res.json({ reply });
-  } catch (err) {
-    logger.error('Gemini AI error', { error: err.message });
-    res.status(500).json({ error: 'AI chat request failed' });
-  }
-});
 
 // =====================
 // GOOGLE CLOUD TRANSLATION

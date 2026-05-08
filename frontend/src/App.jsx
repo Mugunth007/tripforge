@@ -30,18 +30,6 @@ const PlaceCard = memo(function PlaceCard({ place }) {
   );
 });
 
-/* ── Chat Message ── */
-const ChatMessage = memo(function ChatMessage({ msg }) {
-  return (
-    <div className={`chat-msg ${msg.role}`} role="listitem">
-      <div className="chat-bubble">
-        <div className="chat-sender">{msg.role === 'user' ? '🧑 You' : '🤖 TripForge AI'}</div>
-        <div className="chat-text">{msg.text}</div>
-      </div>
-    </div>
-  );
-});
-
 /* ── Main App ── */
 function App() {
   const [apiKey, setApiKey] = useState(null);
@@ -62,10 +50,7 @@ function App() {
   const [toast, setToast] = useState('');
   const [planning, setPlanning] = useState(false);
   const [activeTab, setActiveTab] = useState('route');
-  // AI Chat state
-  const [chatMessages, setChatMessages] = useState([]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
+
   // Translation state
   const [translateText, setTranslateText] = useState('');
   const [translateTarget, setTranslateTarget] = useState('es');
@@ -76,7 +61,6 @@ function App() {
   const mapInstance = useRef(null);
   const directionsRenderer = useRef(null);
   const markersRef = useRef([]);
-  const chatEndRef = useRef(null);
 
   // Fetch config + trips
   useEffect(() => {
@@ -185,33 +169,7 @@ function App() {
     } catch { setToast('Could not load nearby places'); }
   }, [destination, routeInfo, mapsLoaded, clearMarkers]);
 
-  // AI Chat
-  const sendChat = useCallback(async () => {
-    if (!chatInput.trim() || chatLoading) return;
-    const userMsg = { role: 'user', text: chatInput.trim() };
-    setChatMessages(prev => [...prev, userMsg]);
-    setChatInput('');
-    setChatLoading(true);
-    try {
-      const history = chatMessages.slice(-10);
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg.text, history }),
-      });
-      const data = await res.json();
-      if (data.reply) {
-        setChatMessages(prev => [...prev, { role: 'model', text: data.reply }]);
-      } else {
-        setChatMessages(prev => [...prev, { role: 'model', text: data.error || 'Sorry, something went wrong.' }]);
-      }
-    } catch {
-      setChatMessages(prev => [...prev, { role: 'model', text: 'Network error. Please try again.' }]);
-    }
-    setChatLoading(false);
-  }, [chatInput, chatLoading, chatMessages]);
 
-  // Auto-scroll chat
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
 
   // Translate
   const handleTranslate = useCallback(async () => {
@@ -266,7 +224,7 @@ function App() {
 
   const tabs = useMemo(() => [
     { id: 'route', label: '🗺 Route' }, { id: 'explore', label: '🔍 Explore' },
-    { id: 'ai', label: '🤖 AI Chat' }, { id: 'translate', label: '🌐 Translate' }, { id: 'trips', label: '💾 Trips' },
+    { id: 'translate', label: '🌐 Translate' }, { id: 'trips', label: '💾 Trips' },
   ], []);
 
   return (
@@ -276,7 +234,6 @@ function App() {
         <h1>✈ TripForge</h1>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span className="badge badge-accent">Google Maps</span>
-          <span className="badge badge-ai">Gemini AI</span>
           <span className="badge badge-success">Live</span>
         </div>
       </header>
@@ -349,23 +306,6 @@ function App() {
             </div>
           )}
 
-          {/* AI CHAT TAB */}
-          {activeTab === 'ai' && (
-            <div role="tabpanel" aria-labelledby="tab-ai" className="chat-container">
-              <div className="section-title">🤖 TripForge AI Assistant</div>
-              <p className="hint" style={{marginTop:8}}>Ask me about destinations, itineraries, packing tips, budgets, or travel safety!</p>
-              <div className="chat-messages" role="list" aria-label="Chat messages" aria-live="polite">
-                {chatMessages.length === 0 && <div className="chat-empty">Start a conversation!</div>}
-                {chatMessages.map((msg, i) => <ChatMessage key={i} msg={msg} />)}
-                {chatLoading && <div className="chat-msg model"><div className="chat-bubble"><div className="chat-sender">🤖 TripForge AI</div><div className="chat-typing"><span></span><span></span><span></span></div></div></div>}
-                <div ref={chatEndRef} />
-              </div>
-              <div className="chat-input-group">
-                <input id="chat-input" placeholder="Ask about your trip..." value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChat()} aria-label="Chat message input" />
-                <button className="btn btn-primary" onClick={sendChat} disabled={chatLoading || !chatInput.trim()} aria-label="Send message" style={{ minWidth: 48 }}>➤</button>
-              </div>
-            </div>
-          )}
 
           {/* TRANSLATE TAB */}
           {activeTab === 'translate' && (
